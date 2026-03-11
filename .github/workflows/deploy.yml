@@ -35,16 +35,8 @@ jobs:
       - name: Publish
         run: dotnet publish -c Release -o release
 
-      # GitHub Pages proje sitesi: https://<user>.github.io/<repo-name>/
-      # base href bu yüzden "/<repo-name>/" olmalı
-      - name: Fix base href for GitHub Pages
-        run: |
-          REPO_NAME="${{ github.event.repository.name }}"
-          if [ -f release/index.html ]; then
-            sed -i "s|<base href=\"/\" />|<base href=\"/$REPO_NAME/\" />|g" release/index.html
-          fi
-
       # SPA: Olmayan yollarda 404 yerine index.html sunulur (Blazor client-side routing)
+      # base href index.html içindeki script ile otomatik ayarlanıyor
       - name: Add 404.html for SPA routing
         run: |
           if [ -f release/index.html ]; then

@@ -1050,6 +1050,7 @@ C:\Users\Bora\Desktop\FleetDashboard\obj\Debug\net8.0\FleetDashboard.dll
 C:\Users\Bora\Desktop\FleetDashboard\obj\Debug\net8.0\refint\FleetDashboard.dll
 C:\Users\Bora\Desktop\FleetDashboard\obj\Debug\net8.0\FleetDashboard.pdb
 C:\Users\Bora\Desktop\FleetDashboard\obj\Debug\net8.0\ref\FleetDashboard.dll
-C:\Users\Bora\Desktop\FleetDashboard\obj\Debug\net8.0\compressed\tbokotxszb-rauqyjbavo.gz
-C:\Users\Bora\Desktop\FleetDashboard\obj\Debug\net8.0\compressed\qtp97e7bev-ukehdkmypx.gz
-C:\Users\Bora\Desktop\FleetDashboard\obj\Debug\net8.0\compressed\mtnnn54udo-5yy066nqbu.gz
+C:\Users\Bora\Desktop\FleetDashboard\obj\Debug\net8.0\FleetDashboard.sourcelink.json
+C:\Users\Bora\Desktop\FleetDashboard\obj\Debug\net8.0\compressed\tbokotxszb-pl7ucbkm5j.gz
+C:\Users\Bora\Desktop\FleetDashboard\obj\Debug\net8.0\compressed\qtp97e7bev-lz09du4pxa.gz
+C:\Users\Bora\Desktop\FleetDashboard\obj\Debug\net8.0\compressed\mtnnn54udo-uzlehctna5.gz

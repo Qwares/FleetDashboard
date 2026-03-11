@@ -1,7 +1,7 @@
 {
   "mainAssemblyName": "FleetDashboard",
   "resources": {
-    "hash": "sha256-HjX9YqriL+vj/vrtuwt9iBem0a2aiGitGsGXmzXqnbc=",
+    "hash": "sha256-rgtWBPTyogqmFjMyGA4y43ZWpjxQcgD15CcfoWGaeoI=",
     "jsModuleNative": {
       "dotnet.native.js": "sha256-RiGT44TFZmHOY+Oqvb8o8r+BJVWex6+dPxFxrOiWvFY="
     },
@@ -214,10 +214,10 @@
       "mscorlib.wasm": "sha256-Im6xq+lOse4P/VnAyrA3hwPstV67V5dB0EwQWcjipyE=",
       "netstandard.wasm": "sha256-PK0GLtj6kQVtZPzq0FZlnSdHh7geujg80LqKdJXA4pI=",
       "System.Private.CoreLib.wasm": "sha256-gEwccs7GbRSPGmeWBOKxNroYfyM+mZ7hqbP3ki1iwX0=",
-      "FleetDashboard.wasm": "sha256-49lXYy/9n4dCN/mLWKSb1rzNs1YYEWi6tzHZYtdoUTc="
+      "FleetDashboard.wasm": "sha256-AyZamz9rIpXV5OtbvuayIsTLOYJrZKsYHl8lgSWvtho="
     },
     "pdb": {
-      "FleetDashboard.pdb": "sha256-DkFLmVWDHzlVvNDYBNoBcEeaMb9pAgrlABFXofcN3+o="
+      "FleetDashboard.pdb": "sha256-QVIcOuJ9HBdzLdhGSggtL//zTiCRXeq+7EMkCVc2SNA="
     }
   },
   "cacheBootResources": true,

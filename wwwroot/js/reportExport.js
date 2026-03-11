@@ -1,22 +1,25 @@
 // TelemaSense report export: CSV download and simple PDF via jsPDF
 window.fleetReportExport = {
   downloadCsv: function (csvContent, filename) {
-    const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename || 'telemasense-raporu.csv';
-    a.click();
-    URL.revokeObjectURL(url);
+    try {
+      const blob = new Blob(['\uFEFF' + (csvContent || '')], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename || 'telemasense-raporu.csv';
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (e) { console.error('CSV export error:', e); }
   },
 
   downloadPdf: function (title, rows, unit) {
-    const jspdfLib = window.jspdf;
-    if (!jspdfLib || !jspdfLib.jsPDF) {
-      console.error('jspdf not loaded');
-      return;
-    }
-    const doc = new jspdfLib.jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+    try {
+      var JsPDF = (window.jspdf && (window.jspdf.jsPDF || window.jspdf)) || (window.jspdf && window.jspdf.default && (window.jspdf.default.jsPDF || window.jspdf.default)) || (window['jspdf'] && (window['jspdf'].jsPDF || window['jspdf']));
+      if (!JsPDF) {
+        console.error('jspdf not loaded');
+        return;
+      }
+      const doc = new JsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
     const pageW = doc.internal.pageSize.getWidth();
     let y = 15;
     const colWidths = [45, 35, 30, 40, 40];
@@ -46,7 +49,7 @@ window.fleetReportExport = {
         y = 15;
       }
       x = 14;
-      const row = [r.plate || '', String(r.value ?? ''), String(r.threshold ?? ''), r.isNightShift ? 'Evet' : 'Hayır', r.policyStatus === 'Danger' ? 'Tehlikeli' : 'Güvenli'];
+      const row = [r.plate || '', String(r.value ?? ''), String(r.threshold ?? ''), r.isNightShift ? 'Evet' : 'Hayır', (r.policyStatus === 'Danger' ? 'Tehlikeli' : 'Güvenli')];
       row.forEach((cell, i) => {
         doc.text(String(cell).substring(0, 22), x + 2, y + 5);
         x += colWidths[i];
@@ -55,18 +58,21 @@ window.fleetReportExport = {
     });
 
     doc.save('telemasense-raporu.pdf');
+    } catch (e) { console.error('PDF export error:', e); }
   },
 
   exportChartToPng: function () {
-    const el = document.getElementById('fleet-chart-export');
-    if (!el) return;
-    if (typeof html2canvas !== 'undefined') {
-      html2canvas(el, { useCORS: true, scale: 2, logging: false }).then(function (canvas) {
+    try {
+      const el = document.getElementById('fleet-chart-export');
+      if (!el) { console.error('Chart element #fleet-chart-export not found'); return; }
+      var capture = window.html2canvas || (typeof html2canvas !== 'undefined' && html2canvas);
+      if (!capture) { console.error('html2canvas not loaded'); return; }
+      capture(el, { useCORS: true, allowTaint: true, scale: 2, logging: false }).then(function (canvas) {
         const link = document.createElement('a');
         link.download = 'telemasense-grafik-' + new Date().toISOString().slice(0, 10) + '.png';
         link.href = canvas.toDataURL('image/png');
         link.click();
-      });
-    }
+      }).catch(function (err) { console.error('PNG export error:', err); });
+    } catch (e) { console.error('PNG export error:', e); }
   }
 };
