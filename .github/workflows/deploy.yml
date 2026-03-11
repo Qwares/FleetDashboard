@@ -35,18 +35,17 @@ jobs:
       - name: Publish
         run: dotnet publish -c Release -o release
 
-      # SPA: Olmayan yollarda 404 yerine index.html sunulur (Blazor client-side routing)
-      # base href index.html içindeki script ile otomatik ayarlanıyor
+      # Blazor publish çıktısı release/wwwroot/ altında; artifact kökünde index.html olmalı
       - name: Add 404.html for SPA routing
         run: |
-          if [ -f release/index.html ]; then
-            cp release/index.html release/404.html
+          if [ -f release/wwwroot/index.html ]; then
+            cp release/wwwroot/index.html release/wwwroot/404.html
           fi
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: release
+          path: release/wwwroot
 
   deploy:
     environment:
