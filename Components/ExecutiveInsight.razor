@@ -1,0 +1,61 @@
+@namespace FleetDashboard.Components
+@using FleetDashboard.Models
+@using System.Linq
+
+@* Executive Insight Engine: LINQ-derived Top Consumer, Night Usage %, Policy Violations, dynamic labels (Peak / Risk). *@
+@if (Metrics.Count == 0)
+{
+  <div class="alert alert-secondary mb-0">Özeti görmek için yukarıda araç verilerini girin.</div>
+  return;
+}
+@{
+  var violations = Metrics.Where(m => m.IsViolation).ToList();
+  var nightViolations = violations.Where(m => m.IsNightShift).ToList();
+  var nightCount = Metrics.Count(m => m.IsNightShift);
+  var nightPct = Metrics.Count > 0 ? (nightCount * 100.0 / Metrics.Count) : 0;
+  var topConsumer = Metrics.OrderByDescending(m => m.Value).FirstOrDefault();
+  var lowestConsumer = Metrics.Where(m => m.Value > 0).OrderBy(m => m.Value).FirstOrDefault();
+  var fleetAvg = Metrics.Count > 0 ? Metrics.Average(m => m.Value) : 0;
+  var isWarning = violations.Count > 0;
+  var thresholdText = Threshold > 0 ? $"{Threshold:0.##}{Unit}" : "eşik";
+  var nightContext = nightViolations.Count > 0 ? " gece vardiyasında." : ".";
+}
+<div class="alert @(isWarning ? "alert-warning border-warning" : "alert-success border-success") mb-0 d-flex align-items-start">
+  <span class="me-2">@(isWarning ? "⚠️" : "✓")</span>
+  <div>
+    <strong>Yapay Zeka Özeti</strong>
+    <ul class="mb-0 mt-1 small">
+      <li>En yüksek tüketim/hız: <strong>@(topConsumer?.Plate ?? "—")</strong> (@(topConsumer?.Value.ToString("F1") ?? "0") @Unit)</li>
+      <li>Toplam gece kullanımı: <strong>@nightPct.ToString("F0")%</strong> (@Metrics.Count araçtan @nightCount tanesi)</li>
+      <li>Politika ihlali: <strong>@violations.Count</strong> araç eşiği aştı</li>
+    </ul>
+    @if (violations.Count > 0)
+    {
+      <p class="mb-0 mt-2 small fw-bold">Uyarı: @violations.Count araç @thresholdText eşiğini aştı@nightContext</p>
+    }
+  </div>
+</div>
+@* Dinamik Etiketleme: En yüksek performans / Verimlilik riski *@
+<div class="mt-2 p-2 rounded border border-secondary">
+  <div class="small fw-bold text-uppercase text-secondary mb-1">Dinamik Etiketler</div>
+  <div class="small">
+    @if (topConsumer != null)
+    {
+      <div class="text-success">✓ En Yüksek Performans: <strong>@topConsumer.Plate</strong> (@topConsumer.Value.ToString("F1") @Unit)</div>
+    }
+    @if (lowestConsumer != null && Metrics.Count > 1)
+    {
+      <div class="text-warning mt-1">⚠ Verimlilik Kaybı Riski (en düşük): <strong>@lowestConsumer.Plate</strong> (@lowestConsumer.Value.ToString("F1") @Unit)</div>
+    }
+    @if (Metrics.Count > 0 && fleetAvg > 0)
+    {
+      <div class="text-muted mt-1">Filo ortalaması: @fleetAvg.ToString("F1") @Unit — Ortalamanın üstündekiler standartların dışına çıkıyor olabilir.</div>
+    }
+  </div>
+</div>
+
+@code {
+  [Parameter] public List<VehicleMetric> Metrics { get; set; } = new();
+  [Parameter] public string Unit { get; set; } = "km/s";
+  [Parameter] public double Threshold { get; set; } = 80;
+}

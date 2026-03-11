@@ -1,0 +1,203 @@
+@namespace FleetDashboard.Components
+@using FleetDashboard.Models
+
+@* Mini-Excel: X = kategori (plaka/sürücü/tarih), Y = değer. oninput ile grafik anlık güncellenir. *@
+<div class="card border-0 shadow-sm fleet-configurator">
+  <div class="card-header fleet-card-header py-2">
+    <h6 class="mb-0">Veri Gridi (X / Y ekseni)</h6>
+  </div>
+  <div class="card-body">
+    @if (GetOutlierIndices().Count > 0)
+    {
+      <div class="alert alert-warning py-2 mb-3 d-flex align-items-center">
+        <span class="me-2">⚠️</span>
+        <span><strong>Anomali Tespiti (Data Guard):</strong> Bazı değerler filo ortalamasından belirgin şekilde sapıyor. Bu veri hatalı olabilir mi? (Sensör/veri girişi kontrol edin.)</span>
+      </div>
+    }
+    <div class="row align-items-end mb-3 g-2">
+      <div class="col-auto">
+        <label class="form-label small text-uppercase fw-bold text-secondary">Satır sayısı</label>
+        <input type="number" min="1" max="50" class="form-control form-control-sm"
+               value="@VehicleCount" @oninput="OnVehicleCountInput" />
+      </div>
+      <div class="col-auto">
+        <label class="form-label small text-uppercase fw-bold text-secondary">Kritik Eşik</label>
+        <input type="number" step="any" min="0" class="form-control form-control-sm fleet-threshold-input"
+               placeholder="örn. 80" value="@FormatValue(CriticalThreshold ?? 0)" @oninput="OnCriticalThresholdInput" />
+        <span class="small text-muted">Üstü kırmızı, altı yeşil</span>
+      </div>
+      <div class="col-auto small text-muted align-self-center">
+        Veri girildikçe grafik anlık güncellenir.
+      </div>
+    </div>
+    <div class="table-responsive fleet-grid">
+      <table class="table table-sm table-hover mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>@XAxisLabel <span class="small fw-normal text-muted">(X)</span></th>
+            <th>@YAxisLabel <span class="small fw-normal text-muted">(Y)</span></th>
+            <th>Eşik</th>
+            <th>Gece vardiyası</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (var i = 0; i < Metrics.Count; i++)
+          {
+            var index = i;
+            var m = Metrics[i];
+            <tr>
+              <td>
+                <input type="text" class="form-control form-control-sm" placeholder="Plaka, sürücü veya 11.03.2024"
+                       value="@m.Plate" @oninput="e => OnPlateInput(index, e)" />
+              </td>
+              <td class="@(IsOutlier(index) ? "fleet-outlier-cell" : "")">
+                @* Y ekseni: sayı kabul; hatalı giriş kırmızı; aykırı değer sarı (anomali). *@
+                <input type="text" inputmode="decimal" class="form-control form-control-sm @(IsValueInvalid(index) ? "is-invalid" : "") @(IsOutlier(index) ? "fleet-outlier-input" : "")"
+                       placeholder="0" value="@FormatValue(m.Value)" @oninput="e => OnValueInput(index, e)" />
+                @if (IsValueInvalid(index))
+                {
+                  <div class="invalid-feedback d-block small">Lütfen sayısal değer giriniz.</div>
+                }
+                @if (IsOutlier(index) && !IsValueInvalid(index))
+                {
+                  <div class="small text-warning mt-1">⚠ Bu veri anomali olarak işaretlendi.</div>
+                }
+              </td>
+              <td>
+                <input type="number" step="any" min="0" class="form-control form-control-sm" placeholder="örn. 80"
+                       value="@FormatValue(m.Threshold)" @oninput="e => OnThresholdInput(index, e)" />
+              </td>
+              <td>
+                <div class="form-check form-switch mb-0">
+                  <input class="form-check-input" type="checkbox" checked="@m.IsNightShift"
+                         @onchange="e => OnNightShiftChange(index, e)" />
+                  <label class="form-check-label small">Gece</label>
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+@code {
+  [Parameter] public int VehicleCount { get; set; } = 3;
+  [Parameter] public List<VehicleMetric> Metrics { get; set; } = new();
+  [Parameter] public EventCallback<(int VehicleCount, List<VehicleMetric> Metrics)> MetricsChanged { get; set; }
+  [Parameter] public string XAxisLabel { get; set; } = "Plaka / Sürücü";
+  [Parameter] public string YAxisLabel { get; set; } = "Değer (Yakıt/Hız/Km)";
+  [Parameter] public double? CriticalThreshold { get; set; } = 80;
+  [Parameter] public EventCallback<double?> CriticalThresholdChanged { get; set; }
+
+  private HashSet<int> _invalidValueIndices = new();
+
+  private bool IsValueInvalid(int index) => _invalidValueIndices.Contains(index);
+
+  /// <summary>Anomali tespiti: ortalamadan 2 standart sapma dışındaki satırlar.</summary>
+  private HashSet<int> GetOutlierIndices()
+  {
+    var indices = new HashSet<int>();
+    if (Metrics == null || Metrics.Count < 3) return indices;
+    var values = Metrics.Select(m => m.Value).ToList();
+    var avg = values.Average();
+    var variance = values.Average(v => Math.Pow(v - avg, 2));
+    var stdDev = Math.Sqrt(variance);
+    if (stdDev <= 0) return indices;
+    for (var i = 0; i < Metrics.Count; i++)
+      if (Math.Abs(Metrics[i].Value - avg) > 2 * stdDev)
+        indices.Add(i);
+    return indices;
+  }
+
+  private bool IsOutlier(int index) => GetOutlierIndices().Contains(index);
+
+  private void OnVehicleCountInput(ChangeEventArgs e)
+  {
+    if (!int.TryParse(e.Value?.ToString(), out var n) || n < 1) n = 1;
+    if (n > 50) n = 50;
+    var list = new List<VehicleMetric>();
+    for (var i = 0; i < n; i++)
+      list.Add(i < Metrics.Count ? Metrics[i] : new VehicleMetric { Plate = "", Value = 0, Threshold = CriticalThreshold ?? 80 });
+    _invalidValueIndices.RemoveWhere(_ => true);
+    _ = MetricsChanged.InvokeAsync((n, list));
+  }
+
+  private void OnCriticalThresholdInput(ChangeEventArgs e)
+  {
+    ParseDouble(e.Value?.ToString(), out var val);
+    _ = CriticalThresholdChanged.InvokeAsync(val > 0 ? val : (double?)null);
+  }
+
+  private void OnPlateInput(int index, ChangeEventArgs e)
+  {
+    if (index < 0 || index >= Metrics.Count) return;
+    var list = new List<VehicleMetric>(Metrics);
+    list[index] = Clone(list[index], plate: e.Value?.ToString() ?? "");
+    _ = MetricsChanged.InvokeAsync((VehicleCount, list));
+  }
+
+  private void OnValueInput(int index, ChangeEventArgs e)
+  {
+    if (index < 0 || index >= Metrics.Count) return;
+    var raw = e.Value?.ToString() ?? "";
+    var isValid = TryParseDouble(raw, out var val);
+    if (isValid)
+      _invalidValueIndices.Remove(index);
+    else
+      _invalidValueIndices.Add(index);
+    var list = new List<VehicleMetric>(Metrics);
+    list[index] = Clone(list[index], value: isValid ? val : 0);
+    _ = MetricsChanged.InvokeAsync((VehicleCount, list));
+  }
+
+  private void OnThresholdInput(int index, ChangeEventArgs e)
+  {
+    if (index < 0 || index >= Metrics.Count) return;
+    ParseDouble(e.Value?.ToString(), out var val);
+    var list = new List<VehicleMetric>(Metrics);
+    list[index] = Clone(list[index], threshold: val);
+    _ = MetricsChanged.InvokeAsync((VehicleCount, list));
+  }
+
+  private void OnNightShiftChange(int index, ChangeEventArgs e)
+  {
+    if (index < 0 || index >= Metrics.Count) return;
+    var checkedVal = e.Value is bool b ? b : bool.TryParse(e.Value?.ToString(), out var parsed) && parsed;
+    var list = new List<VehicleMetric>(Metrics);
+    list[index] = Clone(list[index], isNightShift: checkedVal);
+    _ = MetricsChanged.InvokeAsync((VehicleCount, list));
+  }
+
+  private static VehicleMetric Clone(VehicleMetric m, string? plate = null, double? value = null, double? threshold = null, bool? isNightShift = null) =>
+    new VehicleMetric
+    {
+      Plate = plate ?? m.Plate,
+      Value = value ?? m.Value,
+      Threshold = threshold ?? m.Threshold,
+      IsNightShift = isNightShift ?? m.IsNightShift
+    };
+
+  private static void ParseDouble(string? s, out double value)
+  {
+    value = 0;
+    if (string.IsNullOrWhiteSpace(s)) return;
+    var normalized = s?.Replace(',', '.') ?? "";
+    double.TryParse(normalized, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out value);
+    if (value < 0) value = 0;
+  }
+
+  private static bool TryParseDouble(string? s, out double value)
+  {
+    value = 0;
+    if (string.IsNullOrWhiteSpace(s)) return true;
+    var normalized = s?.Replace(',', '.') ?? "";
+    if (!double.TryParse(normalized, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out value))
+      return false;
+    if (value < 0) value = 0;
+    return true;
+  }
+
+  private static string FormatValue(double v) => v == 0 ? "" : v.ToString(System.Globalization.CultureInfo.InvariantCulture);
+}

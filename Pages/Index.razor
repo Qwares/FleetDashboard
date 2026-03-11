@@ -1,0 +1,195 @@
+@page "/"
+@inject IJSRuntime JS
+
+<PageTitle>TelemaSense</PageTitle>
+
+@* Main dashboard: Fleet Configurator (reactive grid), Chart (Bar/Line + threshold), AI Insight. *@
+<div class="container-fluid py-3">
+  <div class="row g-3">
+    <div class="col-12">
+      <div class="d-flex flex-wrap justify-content-between align-items-center mb-2 gap-2">
+        <div class="scenario-buttons-wrapper d-flex align-items-center flex-wrap gap-2">
+          <span class="scenario-label">Örnek veri:</span>
+          <div class="btn-group btn-group-sm scenario-buttons" role="group">
+            <button type="button" class="btn btn-scenario" @onclick="LoadScenarioA">A: Performans</button>
+            <button type="button" class="btn btn-scenario" @onclick="LoadScenarioB">B: Maliyet</button>
+            <button type="button" class="btn btn-scenario" @onclick="LoadScenarioC">C: Güvenlik</button>
+          </div>
+        </div>
+        <div class="dropdown">
+          <button class="btn btn-sm btn-outline-light dropdown-toggle" type="button" id="reportDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+            Rapor İndir
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end">
+            <li><button class="dropdown-item" @onclick="ExportToCsv">CSV olarak indir</button></li>
+            <li><button class="dropdown-item" @onclick="ExportToPdf">PDF özet indir</button></li>
+          </ul>
+        </div>
+      </div>
+      <FleetConfigurator VehicleCount="@_vehicleCount" Metrics="@_metrics" MetricsChanged="OnMetricsChanged"
+                   XAxisLabel="@_xAxisLabel" YAxisLabel="@_yAxisLabel"
+                   CriticalThreshold="@_thresholdLine" CriticalThresholdChanged="OnCriticalThresholdChanged" />
+    </div>
+    <div class="col-12">
+      <div class="card border-0 shadow-sm fleet-card">
+        <div class="card-header fleet-card-header d-flex flex-wrap justify-content-between align-items-center py-2 gap-2">
+          <span id="gorsellestirme-baslik" class="chart-section-title">Görselleştirme</span>
+          <div class="btn-group btn-group-sm chart-type-switcher" role="group">
+            <button type="button" class="btn @(!_isLineChart ? "btn-primary" : "btn-outline-light")" @onclick="() => SetChartType(false)">
+              Barchart
+            </button>
+            <button type="button" class="btn @(_isLineChart ? "btn-primary" : "btn-outline-light")" @onclick="() => SetChartType(true)">
+              Linechart
+            </button>
+          </div>
+        </div>
+        <div class="card-body position-relative" id="fleet-chart-export">
+          <FleetChart @key="@(_isLineChart ? "line" : "bar")" Metrics="@_metrics" IsLineChart="@_isLineChart" ThresholdLine="@_thresholdLine"
+            XAxisLabel="@_xAxisLabel" YAxisLabel="@_yAxisLabel" Unit="@_unit" />
+          <div class="mt-2 d-flex gap-2 flex-wrap">
+            <button type="button" class="btn btn-sm btn-outline-light" @onclick="ExportChartPng">Görüntü Olarak İndir (PNG)</button>
+            <button type="button" class="btn btn-sm btn-outline-light" @onclick="ExportToPdf">PDF Raporu Oluştur</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-12">
+      <ExecutiveInsight Metrics="@_metrics" Unit="@_unit" Threshold="@(_thresholdLine ?? 80)" />
+    </div>
+  </div>
+</div>
+
+@code {
+  private int _vehicleCount = 3;
+  private List<VehicleMetric> _metrics = new();
+  private bool _isLineChart;
+  private double? _thresholdLine = 80;
+  private string _xAxisLabel = "Plaka / Sürücü";
+  private string _yAxisLabel = "Değer (Yakıt/Hız/Km)";
+  private string _unit = "km/s";
+
+  protected override void OnInitialized()
+  {
+    for (var i = 0; i < _vehicleCount; i++)
+      _metrics.Add(new VehicleMetric { Plate = "", Value = 0, Threshold = 80 });
+  }
+
+  private void LoadScenarioA()
+  {
+    _xAxisLabel = "Sürücü";
+    _yAxisLabel = "Ekonomik Sürüş Puanı";
+    _unit = "puan";
+    _vehicleCount = 5;
+    _thresholdLine = 70;
+    _metrics = new List<VehicleMetric>
+    {
+      new() { Plate = "Ahmet Y.", Value = 85, Threshold = 70 },
+      new() { Plate = "Mehmet K.", Value = 92, Threshold = 70 },
+      new() { Plate = "Ayşe S.", Value = 78, Threshold = 70 },
+      new() { Plate = "Fatma D.", Value = 88, Threshold = 70 },
+      new() { Plate = "Ali V.", Value = 95, Threshold = 70 }
+    };
+    StateHasChanged();
+  }
+
+  private void LoadScenarioB()
+  {
+    _xAxisLabel = "Dönem";
+    _yAxisLabel = "Toplam Bakım Gideri";
+    _unit = "₺";
+    _vehicleCount = 5;
+    _thresholdLine = 14000;
+    _metrics = new List<VehicleMetric>
+    {
+      new() { Plate = "01.01.2024", Value = 12500, Threshold = 14000 },
+      new() { Plate = "01.02.2024", Value = 11800, Threshold = 14000 },
+      new() { Plate = "01.03.2024", Value = 14200, Threshold = 14000 },
+      new() { Plate = "01.04.2024", Value = 13100, Threshold = 14000 },
+      new() { Plate = "01.05.2024", Value = 12900, Threshold = 14000 }
+    };
+    StateHasChanged();
+  }
+
+  private void LoadScenarioC()
+  {
+    _xAxisLabel = "Bölge";
+    _yAxisLabel = "Hız İhlali Sayısı";
+    _unit = "adet";
+    _vehicleCount = 5;
+    _thresholdLine = 10;
+    _metrics = new List<VehicleMetric>
+    {
+      new() { Plate = "Marmara", Value = 12, Threshold = 10 },
+      new() { Plate = "Ege", Value = 8, Threshold = 10 },
+      new() { Plate = "İç Anadolu", Value = 15, Threshold = 10 },
+      new() { Plate = "Akdeniz", Value = 6, Threshold = 10 },
+      new() { Plate = "Karadeniz", Value = 9, Threshold = 10 }
+    };
+    StateHasChanged();
+  }
+
+  private void OnMetricsChanged((int VehicleCount, List<VehicleMetric> Metrics) e)
+  {
+    _vehicleCount = e.VehicleCount;
+    _metrics = e.Metrics;
+  }
+
+  private void SetChartType(bool isLine)
+  {
+    if (_isLineChart == isLine) return;
+    _isLineChart = isLine;
+    StateHasChanged();
+  }
+
+  private void OnCriticalThresholdChanged(double? value)
+  {
+    _thresholdLine = value;
+  }
+
+  private async Task ExportChartPng()
+  {
+    try { await JS.InvokeVoidAsync("fleetReportExport.exportChartToPng"); }
+    catch { }
+  }
+
+  private async Task ExportToCsv()
+  {
+    var csv = BuildCsvContent();
+    var filename = $"telemasense-raporu-{DateTime.Now:yyyyMMdd-HHmm}.csv";
+    await JS.InvokeVoidAsync("fleetReportExport.downloadCsv", csv, filename);
+  }
+
+  private async Task ExportToPdf()
+  {
+    var rows = _metrics.Select(m => new
+    {
+      plate = m.Plate,
+      value = m.Value,
+      threshold = m.Threshold,
+      isNightShift = m.IsNightShift,
+      policyStatus = m.PolicyStatus
+    }).ToArray();
+    await JS.InvokeVoidAsync("fleetReportExport.downloadPdf", "TelemaSense Raporu", rows, _unit);
+  }
+
+  private string BuildCsvContent()
+  {
+    const string sep = ";";
+    var header = _xAxisLabel + sep + _yAxisLabel + " (" + _unit + ")" + sep + "Eşik" + sep + "Gece Vardiyası" + sep + "Politika";
+    var lines = _metrics.Select(m =>
+    {
+      var plate = EscapeCsv(m.Plate);
+      var gece = m.IsNightShift ? "Evet" : "Hayır";
+      var politika = m.PolicyStatus == "Danger" ? "Tehlikeli" : "Güvenli";
+      return $"{plate}{sep}{m.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)}{sep}{m.Threshold.ToString(System.Globalization.CultureInfo.InvariantCulture)}{sep}{gece}{sep}{politika}";
+    });
+    return header + Environment.NewLine + string.Join(Environment.NewLine, lines);
+  }
+
+  private static string EscapeCsv(string value)
+  {
+    if (string.IsNullOrEmpty(value)) return "";
+    if (value.Contains(';') || value.Contains('"') || value.Contains('\n')) return "\"" + value.Replace("\"", "\"\"") + "\"";
+    return value;
+  }
+}

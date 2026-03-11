@@ -1,0 +1,60 @@
+@namespace FleetDashboard.Components
+@using FleetDashboard.Models
+@using ApexCharts
+
+<ApexChart TItem="FleetChartDataItem" Title="@ChartTitle" Options="ChartOptions" Height="400">
+  <ApexPointTooltip>
+    @{
+      var hover = context as HoverData<FleetChartDataItem>;
+      var item = hover != null && hover.DataPointIndex >= 0 && hover.DataPointIndex < ChartData.Count
+        ? ChartData[hover.DataPointIndex]
+        : (FleetChartDataItem?)null;
+    }
+    @if (item != null)
+    {
+      <div class="apex-tooltip-fleet p-2">
+        <div><strong>@XAxisLabel:</strong> @item.Plate</div>
+        <div><strong>@YAxisLabel:</strong> @item.Value.ToString("F1") @Unit</div>
+        <div><strong>Filo ort.:</strong> @(item.IsAboveAverage ? "Ortalamanın üstünde" : "Ortalamanın altında")</div>
+        @if (item.OutlierValue != 0)
+        {
+          <div class="text-warning"><strong>⚠ Anomali?</strong> Bu veri kontrol edilmeli.</div>
+        }
+        <div><strong>Vardiya:</strong> @(item.IsNightShift ? "Gece" : "Gündüz")</div>
+        <div><strong>Durum:</strong> <span class="badge @(item.PolicyStatus == "Danger" ? "bg-danger" : "bg-success")">@item.DurumText</span></div>
+      </div>
+    }
+  </ApexPointTooltip>
+  <ChildContent>
+    @if (IsLineChart)
+    {
+      @* Trend: Gündüz mavi, Gece gri; anomali sarı *@
+      <ApexPointSeries TItem="FleetChartDataItem" Items="ChartData" Name="Gündüz"
+                      SeriesType="@SeriesType.Line" XValue="e => e.Plate" YValue="e => (decimal)e.DayValue" Color="#007AFF" />
+      <ApexPointSeries TItem="FleetChartDataItem" Items="ChartData" Name="Gece"
+                      SeriesType="@SeriesType.Line" XValue="e => e.Plate" YValue="e => (decimal)e.NightValue" Color="#4A4A4A" />
+      @if (ChartData.Any(c => c.OutlierValue != 0))
+      {
+        <ApexPointSeries TItem="FleetChartDataItem" Items="ChartData" Name="Anomali?"
+                        SeriesType="@SeriesType.Line" XValue="e => e.Plate" YValue="e => (decimal)e.OutlierValue" Color="#d29922" />
+      }
+    }
+    else
+    {
+      @* Kıyaslama: Limit altı mavi/gri, limit üstü kırmızı (4 seri) *@
+      <ApexPointSeries TItem="FleetChartDataItem" Items="ChartData" Name="Gündüz (Limit Altı)"
+                      SeriesType="@SeriesType.Bar" XValue="e => e.Plate" YValue="e => (decimal)e.DaySafeValue" Color="#2ea043" />
+      <ApexPointSeries TItem="FleetChartDataItem" Items="ChartData" Name="Gündüz (Limit Üstü)"
+                      SeriesType="@SeriesType.Bar" XValue="e => e.Plate" YValue="e => (decimal)e.DayViolationValue" Color="#e74c3c" />
+      <ApexPointSeries TItem="FleetChartDataItem" Items="ChartData" Name="Gece (Limit Altı)"
+                      SeriesType="@SeriesType.Bar" XValue="e => e.Plate" YValue="e => (decimal)e.NightSafeValue" Color="#238636" />
+      <ApexPointSeries TItem="FleetChartDataItem" Items="ChartData" Name="Gece (Limit Üstü)"
+                      SeriesType="@SeriesType.Bar" XValue="e => e.Plate" YValue="e => (decimal)e.NightViolationValue" Color="#e74c3c" />
+      @if (ChartData.Any(c => c.OutlierValue != 0))
+      {
+        <ApexPointSeries TItem="FleetChartDataItem" Items="ChartData" Name="Anomali?"
+                        SeriesType="@SeriesType.Bar" XValue="e => e.Plate" YValue="e => (decimal)e.OutlierValue" Color="#d29922" />
+      }
+    }
+  </ChildContent>
+</ApexChart>

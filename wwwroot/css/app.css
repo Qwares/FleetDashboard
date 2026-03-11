@@ -1,0 +1,185 @@
+/* TelemaSense – high-contrast, professional theme */
+
+:root {
+  --fleet-bg: #0f1419;
+  --fleet-surface: #1a2332;
+  --fleet-surface-elevated: #1e2a3a;
+  --fleet-border: #2d3a4d;
+  --fleet-text: #e6edf3;
+  --fleet-text-muted: #8b949e;
+  --fleet-accent: #007AFF;
+  --fleet-accent-night: #4A4A4A;
+  --fleet-danger: #e74c3c;
+  --fleet-success: #2ea043;
+  --fleet-warning: #d29922;
+}
+
+html, body { height: 100%; }
+body {
+  background: var(--fleet-bg);
+  color: var(--fleet-text);
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+
+.fleet-layout { min-height: 100vh; }
+
+.fleet-header {
+  background: var(--fleet-surface);
+  border-bottom: 2px solid var(--fleet-accent);
+  padding: 0.5rem 1.5rem;
+  display: flex;
+  align-items: center;
+}
+
+.fleet-header-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.fleet-logo {
+  height: 40px;
+  width: auto;
+  max-width: 240px;
+  display: block;
+  object-fit: contain;
+}
+
+.fleet-title {
+  margin: 0;
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: var(--fleet-text);
+}
+
+.fleet-main { padding: 1rem; }
+
+/* Cards */
+.card {
+  background: var(--fleet-surface);
+  color: var(--fleet-text);
+  border-radius: 6px;
+}
+
+.fleet-card-header {
+  background: var(--fleet-surface-elevated) !important;
+  border-bottom: 1px solid var(--fleet-border);
+  color: var(--fleet-text);
+}
+
+.fleet-card-header .chart-section-title {
+  color: #fff !important;
+  font-weight: 600;
+}
+
+/* Form controls */
+.form-control, .form-control:focus {
+  background: var(--fleet-bg);
+  border-color: var(--fleet-border);
+  color: var(--fleet-text);
+}
+
+.form-control:focus {
+  border-color: var(--fleet-accent);
+  box-shadow: 0 0 0 0.2rem rgba(0, 122, 255, 0.25);
+}
+
+.form-control::placeholder {
+  color: var(--fleet-text-muted);
+}
+
+/* Table */
+.table {
+  color: var(--fleet-text);
+}
+
+.table-light {
+  background: var(--fleet-surface-elevated);
+  color: var(--fleet-text);
+}
+
+.table-hover tbody tr:hover {
+  background: rgba(0, 122, 255, 0.08);
+}
+
+/* Alerts */
+.alert-success { background: rgba(46, 160, 67, 0.15); color: var(--fleet-text); }
+.alert-warning { background: rgba(210, 153, 34, 0.15); color: var(--fleet-text); }
+.alert-secondary { background: var(--fleet-surface-elevated); color: var(--fleet-text-muted); }
+
+/* Custom tooltip (hint) – nokta/sütun üzerine gelindiğinde */
+.apex-tooltip-fleet {
+  min-width: 180px;
+  font-size: 0.875rem;
+  background: var(--fleet-surface-elevated) !important;
+  border: 1px solid var(--fleet-accent);
+  border-radius: 6px;
+  color: var(--fleet-text);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+}
+
+.apex-tooltip-fleet .badge { font-size: 0.7rem; }
+
+/* Report download dropdown */
+.dropdown-menu { background: var(--fleet-surface-elevated); border-color: var(--fleet-border); }
+.dropdown-item { color: var(--fleet-text); }
+.dropdown-item:hover { background: rgba(0, 122, 255, 0.2); color: var(--fleet-text); }
+.dropdown-item:focus { background: var(--fleet-accent); color: #fff; }
+
+/* Chart type switcher – kıyaslama / trend */
+.chart-type-switcher .btn {
+  font-size: 0.8rem;
+  border-color: var(--fleet-border);
+  color: var(--fleet-text);
+}
+.chart-type-switcher .btn:hover {
+  border-color: var(--fleet-accent);
+  color: var(--fleet-accent);
+  background: rgba(0, 122, 255, 0.1);
+}
+.chart-type-switcher .btn-primary {
+  background: var(--fleet-accent);
+  border-color: var(--fleet-accent);
+  color: #fff;
+}
+.chart-type-switcher .btn-primary:hover {
+  background: #0062cc;
+  border-color: #0062cc;
+  color: #fff;
+}
+
+/* Veri gridi – Excel benzeri */
+.fleet-grid .table th { white-space: nowrap; }
+
+/* Örnek veri butonları – görünür, kontrastlı */
+.scenario-buttons-wrapper { gap: 0.5rem; }
+.scenario-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--fleet-text);
+  margin: 0;
+}
+.scenario-buttons .btn-scenario {
+  font-size: 0.8rem;
+  font-weight: 500;
+  padding: 0.4rem 0.75rem;
+  border: 1px solid var(--fleet-accent);
+  color: var(--fleet-accent);
+  background: rgba(0, 122, 255, 0.12);
+}
+.scenario-buttons .btn-scenario:hover {
+  background: rgba(0, 122, 255, 0.25);
+  border-color: var(--fleet-accent);
+  color: #fff;
+}
+.scenario-buttons .btn-group .btn-scenario:not(:first-child) { border-left-color: var(--fleet-accent); }
+
+/* Y ekseni validasyonu: hatalı girişte kırmızı kutu */
+.form-control.is-invalid { border-color: var(--fleet-danger); background: rgba(231, 76, 60, 0.08); }
+.invalid-feedback { color: #f87171; }
+
+/* Anomali tespiti: aykırı değer hücresi sarı vurgu */
+.fleet-outlier-cell { background: rgba(210, 153, 34, 0.12); }
+.fleet-outlier-input.form-control { border-color: var(--fleet-warning); background: rgba(210, 153, 34, 0.08); }
+.fleet-outlier-input.form-control:focus { border-color: var(--fleet-warning); box-shadow: 0 0 0 0.2rem rgba(210, 153, 34, 0.25); }

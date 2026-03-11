@@ -1,0 +1,68 @@
+# Blazor WebAssembly projesini GitHub Pages'e deploy eder.
+# Repo: https://<kullanici>.github.io/<repo-adi>/ şeklinde yayınlanır.
+
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Restore
+        run: dotnet restore
+
+      - name: Publish
+        run: dotnet publish -c Release -o release
+
+      # GitHub Pages proje sitesi: https://<user>.github.io/<repo-name>/
+      # base href bu yüzden "/<repo-name>/" olmalı
+      - name: Fix base href for GitHub Pages
+        run: |
+          REPO_NAME="${{ github.event.repository.name }}"
+          if [ -f release/index.html ]; then
+            sed -i "s|<base href=\"/\" />|<base href=\"/$REPO_NAME/\" />|g" release/index.html
+          fi
+
+      # SPA: Olmayan yollarda 404 yerine index.html sunulur (Blazor client-side routing)
+      - name: Add 404.html for SPA routing
+        run: |
+          if [ -f release/index.html ]; then
+            cp release/index.html release/404.html
+          fi
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: release
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deploy
+        uses: actions/deploy-pages@v4
